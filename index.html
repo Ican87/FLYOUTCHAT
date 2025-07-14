@@ -55,8 +55,21 @@
     }
 
     #message-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-    .message { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 9999px; backdrop-filter: blur(6px); white-space: nowrap; animation: fly 7s linear forwards; }
-    @keyframes fly { 0%{transform:translate(-50%,0) rotate(var(--rot)) translateX(0);opacity:1;} 100%{transform:translate(-50%,-120vh) rotate(var(--rot)) translateX(var(--dx));opacity:0;} }
+    .message {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      backdrop-filter: blur(6px);
+      white-space: nowrap;
+      animation: fly-left 7s linear forwards;
+    }
+    @keyframes fly-left {
+      0% { transform: translateX(100%) translateY(0); opacity: 1; }
+      100% { transform: translateX(-120vw) translateY(-60vh); opacity: 0; }
+    }
 
     #composer { position: absolute; left: 50%; bottom: 2rem; transform: translateX(-50%); display: flex; gap: 0.75rem; }
     #composer input { flex: 1; width: 18rem; }
@@ -160,10 +173,6 @@
       const bubble = document.createElement("div");
       bubble.className = "message";
       bubble.textContent = `${nick}: ${text}`;
-      const rot = Math.random()*60 - 30;
-      const dx = Math.random()*300 - 150;
-      bubble.style.setProperty("--rot", `${rot}deg`);
-      bubble.style.setProperty("--dx", `${dx}px`);
       messageContainer.appendChild(bubble);
       setTimeout(() => bubble.remove(), 7000);
     }
