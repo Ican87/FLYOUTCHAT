@@ -37,7 +37,7 @@
     @keyframes pulse{from{box-shadow:0 0 4px var(--accent),0 0 10px var(--accent)}to{box-shadow:0 0 12px var(--accent),0 0 25px var(--accent)}}
 
     #message-container{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-    .message{position:absolute;background:rgba(255,255,255,0.1);padding:.5rem 1rem;border-radius:9999px;backdrop-filter:blur(6px);white-space:nowrap;animation:fly 12s linear infinite}
+    .message{font-size:1.2rem;font-weight:500;line-height:1.4;text-shadow:0 0 4px rgba(255,255,255,0.3);}
     .user-flyout{background:rgba(255,255,255,0.05);color:#0ff;font-style:italic}
     .user-leave{background:rgba(255,255,255,0.05);color:#f55;font-style:italic}
     @keyframes fly{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--dx),var(--dy));opacity:1}}
@@ -52,7 +52,13 @@
     #online-users h3{margin:0 0 .5rem 0;color:var(--accent);font-size:1rem}
     #online-users ul{list-style:none;padding:0;margin:0}
     #online-users li{margin:.25rem 0;color:#0ff;font-style:italic}
-  </style>
+  @media (max-width: 600px) {
+  .message {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+}
+</style>
 </head>
 <body>
   <section id="login-screen" class="screen">
