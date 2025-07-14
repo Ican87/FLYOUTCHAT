@@ -9,7 +9,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-  <!-- Basic styling -->
   <style>
     :root {
       --bg: #0a0a0a;
@@ -20,69 +19,60 @@
     }
 
     * { box-sizing: border-box; }
-    html, body {
-      width: 100%; height: 100%; margin: 0;
-      font-family: system-ui, sans-serif;
-      background: var(--bg); color: #fafafa;
-      overflow: hidden;
-    }
+    html, body { width: 100%; height: 100%; margin: 0; font-family: system-ui,sans-serif; background: var(--bg); color:#fafafa; overflow:hidden; }
+    body::before { content:""; position:fixed; inset:0; z-index:-1; background:var(--bg-image) center/cover no-repeat; opacity:var(--bg-opacity); pointer-events:none; }
 
-    body::before {
-      content: ""; position: fixed; inset: 0; z-index: -1;
-      background: var(--bg-image) center/cover no-repeat;
-      opacity: var(--bg-opacity);
-      pointer-events: none;
-    }
+    .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.25rem; transition:opacity .4s ease; }
+    .hidden { opacity:0; pointer-events:none; }
 
-    .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem; transition: opacity 0.4s ease; }
-    .hidden { opacity: 0; pointer-events: none; }
+    input,button { padding:.75rem 1rem; border:none; border-radius:.75rem; font-size:1rem; }
+    input { background:var(--panel); color:#fff; width:18rem; }
+    input:focus { outline:2px solid var(--accent); }
 
-    input, button { padding: 0.75rem 1rem; border: none; border-radius: 0.75rem; font-size: 1rem; }
-    input { background: var(--panel); color: #fff; width: 18rem; }
-    input:focus { outline: 2px solid var(--accent); }
+    button { background:var(--accent); color:#fff; cursor:pointer; transition:background .2s ease; }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    button:hover:not(:disabled) { filter:brightness(1.1); }
 
-    button { background: var(--accent); color: #fff; cursor: pointer; transition: background 0.2s ease; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-    button:hover:not(:disabled) { filter: brightness(1.1); }
+    .glow { box-shadow:0 0 8px var(--accent),0 0 16px var(--accent); animation:pulse 1.6s infinite alternate ease-in-out; }
+    @keyframes pulse { from{box-shadow:0 0 4px var(--accent),0 0 10px var(--accent);} to{box-shadow:0 0 12px var(--accent),0 0 25px var(--accent);} }
 
-    .glow {
-      box-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent);
-      animation: pulse 1.6s infinite alternate ease-in-out;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 4px var(--accent), 0 0 10px var(--accent); }
-      100% { box-shadow: 0 0 12px var(--accent), 0 0 25px var(--accent); }
-    }
-
-    #message-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    #message-container { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
     .message {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      background: rgba(255,255,255,0.1);
-      padding: 0.5rem 1rem;
-      border-radius: 9999px;
-      backdrop-filter: blur(6px);
-      white-space: nowrap;
-      animation: fly-left 7s linear forwards;
+      position:absolute;
+      background:rgba(255,255,255,0.1);
+      padding:.5rem 1rem;
+      border-radius:9999px;
+      backdrop-filter:blur(6px);
+      white-space:nowrap;
+      animation:fly 12s linear infinite;
     }
-    @keyframes fly-left {
-      0% { transform: translateX(100%) translateY(0); opacity: 1; }
-      100% { transform: translateX(-120vw) translateY(-60vh); opacity: 0; }
+    .user-flyout {
+      background:rgba(255,255,255,0.05);
+      color:#0ff;
+      font-style:italic;
+    }
+    .user-leave {
+      background:rgba(255,255,255,0.05);
+      color:#f55;
+      font-style:italic;
+    }
+    @keyframes fly {
+      0%   { transform: translate(0,0); opacity:1; }
+      100% { transform: translate(var(--dx), var(--dy)); opacity:1; }
     }
 
-    #composer { position: absolute; left: 50%; bottom: 2rem; transform: translateX(-50%); display: flex; gap: 0.75rem; }
-    #composer input { flex: 1; width: 18rem; }
+    #composer { position:absolute; left:50%; bottom:2rem; transform:translateX(-50%); display:flex; gap:.75rem; }
+    #composer input { flex:1; width:18rem; }
 
-    #toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: var(--panel); padding: 0.5rem 1rem; border-radius: 0.5rem; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 9999; }
-    #toast.show { opacity: 1; }
+    #toast { position:fixed; top:1rem; left:50%; transform:translateX(-50%); background:var(--panel); padding:.5rem 1rem; border-radius:.5rem; opacity:0; pointer-events:none; transition:opacity .3s ease; z-index:9999; }
+    #toast.show { opacity:1; }
   </style>
 </head>
 <body>
   <section id="login-screen" class="screen">
     <h1>Fly‑Out Chat</h1>
     <input id="nickname" placeholder="Nickname" />
-    <p>Follow <a href="https://www.instagram.com/exvisuites/" target="_blank" style="color: var(--accent);">@exvisuites</a> lalu klik Verify.</p>
+    <p>Follow <a href="https://www.instagram.com/exvisuites/" target="_blank" style="color:var(--accent)">@exvisuites</a> lalu klik Verify.</p>
     <button id="verify-btn">Verify Instagram</button>
     <button id="login-btn" class="glow">Enter Chat</button>
   </section>
@@ -98,83 +88,86 @@
   <div id="toast"></div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCLmsuZvBu526oiHtX2NNoqHoclZ7lMrt0",
-      authDomain: "flyoutchat.firebaseapp.com",
-      databaseURL: "https://flyoutchat-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "flyoutchat",
-      storageBucket: "flyoutchat.appspot.com",
-      messagingSenderId: "1032339038175",
-      appId: "1:1032339038175:web:af095a595ede018b83ae6a",
-      measurementId: "G-7D2LK5ST4C"
+    const firebaseConfig={
+      apiKey:"AIzaSyCLmsuZvBu526oiHtX2NNoqHoclZ7lMrt0",
+      authDomain:"flyoutchat.firebaseapp.com",
+      databaseURL:"https://flyoutchat-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId:"flyoutchat",
+      storageBucket:"flyoutchat.appspot.com",
+      messagingSenderId:"1032339038175",
+      appId:"1:1032339038175:web:af095a595ede018b83ae6a"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const db=firebase.database();
 
-    const $ = (id) => document.getElementById(id);
-    const loginScreen = $("login-screen");
-    const chatScreen = $("chat-screen");
-    const loginBtn = $("login-btn");
-    const verifyBtn = $("verify-btn");
-    const nicknameInput = $("nickname");
-    const messageInput = $("message-input");
-    const composer = $("composer");
-    const messageContainer = $("message-container");
-    const toast = $("toast");
+    const $=id=>document.getElementById(id);
+    const loginScreen=$("login-screen");
+    const chatScreen=$("chat-screen");
+    const loginBtn=$("login-btn");
+    const verifyBtn=$("verify-btn");
+    const nicknameInput=$("nickname");
+    const messageInput=$("message-input");
+    const composer=$("composer");
+    const messageContainer=$("message-container");
+    const toast=$("toast");
 
-    let currentNick = null;
-    let verified = true;
+    let currentNick=null;
 
-    const showToast = (msg, ms=3000) => {
-      toast.textContent = msg;
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), ms);
-    };
+    const showToast=(msg,ms=3000)=>{ toast.textContent=msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"),ms);} ;
 
-    verifyBtn.addEventListener("click", () => {
-      const url = "https://www.instagram.com/exvisuites/";
-      const win = window.open(url, "_blank");
-      if (!win) showToast("Popup diblokir — buka Instagram manual");
-      setTimeout(() => {
-        if (confirm("Sudah follow akun @exvisuites?")) {
-          showToast("Terima kasih sudah follow!");
-        } else {
-          showToast("Klik Verify lagi setelah follow");
-        }
-      }, 2000);
+    verifyBtn.addEventListener("click",()=>{
+      window.open("https://www.instagram.com/exvisuites/","_blank");
+      showToast("Setelah follow, klik Enter Chat");
     });
 
-    loginBtn.addEventListener("click", () => {
-      const nick = nicknameInput.value.trim();
-      if (!nick) {
-        showToast("Nickname wajib");
-        return;
-      }
-      currentNick = nick;
-      localStorage.setItem("nick", nick);
+    loginBtn.addEventListener("click",()=>{
+      const nick=nicknameInput.value.trim();
+      if(!nick){ showToast("Nickname wajib"); return; }
+      currentNick=nick;
+      db.ref("onlineUsers/"+nick).set(true);
+      db.ref("onlineUsers/"+nick).onDisconnect().remove();
       loginScreen.classList.add("hidden");
       chatScreen.classList.remove("hidden");
     });
 
-    composer.addEventListener("submit", (e) => {
+    composer.addEventListener("submit",e=>{
       e.preventDefault();
-      const text = messageInput.value.trim();
-      if (!text || !currentNick) return;
-      messageInput.value = "";
-      db.ref("messages").push({ nick: currentNick, text, ts: Date.now() });
+      const text=messageInput.value.trim();
+      if(!text||!currentNick) return;
+      messageInput.value="";
+      db.ref("messages").push({ nick:currentNick, text, ts:Date.now() });
     });
 
-    db.ref("messages").limitToLast(100).on("child_added", (snap) => {
-      const { nick: sender, text } = snap.val();
-      displayFlyout(sender, text);
+    db.ref("messages").limitToLast(100).on("child_added",snap=>{
+      const {nick:textNick,text}=snap.val();
+      displayFlyout(textNick,text);
     });
 
-    function displayFlyout(nick, text) {
-      const bubble = document.createElement("div");
-      bubble.className = "message";
-      bubble.textContent = `${nick}: ${text}`;
+    db.ref("onlineUsers").on("child_added", snap => {
+      const nick = snap.key;
+      if (nick !== currentNick) displayFlyout(nick, "online");
+    });
+
+    db.ref("onlineUsers").on("child_removed", snap => {
+      const nick = snap.key;
+      displayFlyout(nick, "offline");
+    });
+
+    function displayFlyout(nick,text){
+      const bubble=document.createElement("div");
+      if (text === "online") bubble.className="message user-flyout";
+      else if (text === "offline") bubble.className="message user-leave";
+      else bubble.className="message";
+      bubble.textContent=text === "online" ? `👤 ${nick} joined` : text === "offline" ? `❌ ${nick} left` : `${nick}: ${text}`;
+
+      bubble.style.top=`${Math.random()*100}vh`;
+      bubble.style.left=`${Math.random()*100}vw`;
+      const dx=(Math.random()*2-1)*window.innerWidth*1.2;
+      const dy=(Math.random()*2-1)*window.innerHeight*1.2;
+      bubble.style.setProperty("--dx",`${dx}px`);
+      bubble.style.setProperty("--dy",`${dy}px`);
       messageContainer.appendChild(bubble);
-      setTimeout(() => bubble.remove(), 7000);
+      setTimeout(()=>bubble.remove(),30000);
     }
   </script>
 </body>
