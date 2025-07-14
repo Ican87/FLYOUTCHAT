@@ -37,7 +37,7 @@
     @keyframes pulse{from{box-shadow:0 0 4px var(--accent),0 0 10px var(--accent)}to{box-shadow:0 0 12px var(--accent),0 0 25px var(--accent)}}
 
     #message-container{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-    .message{position:absolute;background:rgba(255,255,255,0.1);padding:.5rem 1rem;border-radius:9999px;backdrop-filter:blur(6px);white-space:nowrap;animation:fly 12s linear infinite}
+    .message{position:absolute;background:rgba(255,255,255,0.1);padding:.5rem 1rem;border-radius:9999px;backdrop-filter:blur(6px);white-space:nowrap;animation:fly 12s linear infinite;max-width:80vw;word-break:break-word;white-space:normal}
     .user-flyout{background:rgba(255,255,255,0.05);color:#0ff;font-style:italic}
     .user-leave{background:rgba(255,255,255,0.05);color:#f55;font-style:italic}
     @keyframes fly{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--dx),var(--dy));opacity:1}}
@@ -128,7 +128,10 @@
     // ===== Receive messages =====
     db.ref("messages").limitToLast(200).on("child_added",snap=>{
       const {nick,text}=snap.val();
-      displayFlyout(nick,text);
+      // Only display messages from other users
+      if(nick !== currentNick) {
+        displayFlyout(nick,text);
+      }
     });
 
     // ===== Track online users =====
@@ -144,9 +147,16 @@
     // ===== Flyout bubble =====
     function displayFlyout(nick,text){
       const bubble=document.createElement("div");
-      if(text==="online")bubble.className="message user-flyout",bubble.textContent=`👤 ${nick} joined`;
-      else if(text==="offline")bubble.className="message user-leave",bubble.textContent=`❌ ${nick} left`;
-      else bubble.className="message",bubble.textContent=`${nick}: ${text}`;
+      if(text==="online") {
+        bubble.className="message user-flyout";
+        bubble.textContent=`👤 ${nick} joined`;
+      } else if(text==="offline") {
+        bubble.className="message user-leave";
+        bubble.textContent=`❌ ${nick} left`;
+      } else {
+        bubble.className="message";
+        bubble.innerHTML=`<strong>${nick}:</strong> ${text}`;
+      }
 
       // Random start position
       bubble.style.top=`${Math.random()*100}vh`;
