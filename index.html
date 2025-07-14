@@ -47,7 +47,11 @@
 
     #toast{position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:var(--panel);padding:.5rem 1rem;border-radius:.5rem;opacity:0;pointer-events:none;transition:opacity .3s ease;z-index:9999}
     #toast.show{opacity:1}
-  </style>
+  #online-users{position:fixed;top:1rem;right:1rem;background:var(--panel);padding:1rem;border-radius:.75rem;max-height:60vh;overflow:auto;font-size:.9rem;z-index:10}
+#online-users h3{margin:0 0 .5rem 0;color:var(--accent);font-size:1rem}
+#online-users ul{list-style:none;padding:0;margin:0}
+#online-users li{margin:.25rem 0;color:#0ff;font-style:italic}
+</style>
 </head>
 <body>
   <section id="login-screen" class="screen">
@@ -67,6 +71,10 @@
   </section>
 
   <div id="toast"></div>
+<div id="online-users">
+  <h3>Online Users</h3>
+  <ul id="user-list"></ul>
+</div>
 
   <script>
     // ===== Firebase config (replace with your values) =====
@@ -105,15 +113,26 @@
     });
 
     // ===== Login =====
-    loginBtn.addEventListener("click",()=>{
-      const nick=nicknameInput.value.trim();
-      if(!nick){showToast("Nickname wajib");return;}
-      currentNick=nick;
+    loginBtn.addEventListener("click", () => {
+      const nick = nicknameInput.value.trim();
+      if (!nick) {
+        showToast("Nickname wajib");
+        return;
+      }
+      currentNick = nick;
       // Mark user online
       db.ref(`onlineUsers/${nick}`).set(true);
       db.ref(`onlineUsers/${nick}`).onDisconnect().remove();
       loginScreen.classList.add("hidden");
       chatScreen.classList.remove("hidden");
+
+      // Ambil pesan sebelumnya agar muncul saat user baru masuk
+      db.ref("messages").once("value", (snapshot) => {
+        snapshot.forEach((snap) => {
+          const { nick: msgNick, text } = snap.val();
+          displayFlyout(msgNick, text);
+        });
+      });
     });
 
     // ===== Send message =====
@@ -132,14 +151,20 @@
     });
 
     // ===== Track online users =====
-    db.ref("onlineUsers").on("child_added",snap=>{
-      const nick=snap.key;
-      if(nick!==currentNick)displayFlyout(nick,"online");
-    });
-    db.ref("onlineUsers").on("child_removed",snap=>{
-      const nick=snap.key;
-      displayFlyout(nick,"offline");
-    });
+    db.ref("onlineUsers").on("child_added", snap => {
+  const nick = snap.key;
+  if (nick !== currentNick) displayFlyout(nick, "online");
+  const li = document.createElement("li");
+  li.id = `user-${nick}`;
+  li.textContent = nick;
+  document.getElementById("user-list").appendChild(li);
+});
+    db.ref("onlineUsers").on("child_removed", snap => {
+  const nick = snap.key;
+  displayFlyout(nick, "offline");
+  const li = document.getElementById(`user-${nick}`);
+  if (li) li.remove();
+});
 
     // ===== Flyout bubble =====
     function displayFlyout(nick,text){
