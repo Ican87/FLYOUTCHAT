@@ -151,14 +151,28 @@
     });
 
     // ===== Track online users =====
+    // Ambil semua user online saat login
+    db.ref("onlineUsers").once("value", snapshot => {
+      snapshot.forEach(snap => {
+        const nick = snap.key;
+        const li = document.createElement("li");
+        li.id = `user-${nick}`;
+        li.textContent = nick;
+        document.getElementById("user-list").appendChild(li);
+      });
+    });
+
+    // Listener user baru yang login
     db.ref("onlineUsers").on("child_added", snap => {
-  const nick = snap.key;
-  if (nick !== currentNick) displayFlyout(nick, "online");
-  const li = document.createElement("li");
-  li.id = `user-${nick}`;
-  li.textContent = nick;
-  document.getElementById("user-list").appendChild(li);
-});
+      const nick = snap.key;
+      if (!document.getElementById(`user-${nick}`)) {
+        displayFlyout(nick, "online");
+        const li = document.createElement("li");
+        li.id = `user-${nick}`;
+        li.textContent = nick;
+        document.getElementById("user-list").appendChild(li);
+      }
+    });
     db.ref("onlineUsers").on("child_removed", snap => {
   const nick = snap.key;
   displayFlyout(nick, "offline");
