@@ -123,14 +123,7 @@
       loginScreen.classList.add("hidden");
       chatScreen.classList.remove("hidden");
 
-      db.ref("messages").once("value", (snapshot) => {
-        snapshot.forEach((snap) => {
-          const { nick: msgNick, text } = snap.val();
-          displayFlyout(msgNick, text);
-        });
-      });
-
-      db.ref("onlineUsers").once("value", snapshot => {
+        db.ref("onlineUsers").once("value", snapshot => {
         snapshot.forEach(snap => {
           const nick = snap.key;
           if (!document.getElementById(`user-${nick}`)) {
@@ -162,6 +155,7 @@
     });
 
     composer.addEventListener("submit", e => {
+  console.log("KIRIM PESAN:", currentNick, messageInput.value.trim());
       e.preventDefault();
       const text = messageInput.value.trim();
       if (!text || !currentNick) return;
@@ -175,6 +169,7 @@
     });
 
     function displayFlyout(nick, text) {
+  console.log("FLYOUT:", nick, text);
       const bubble = document.createElement("div");
       if (text === "online") {
         bubble.className = "message user-flyout";
