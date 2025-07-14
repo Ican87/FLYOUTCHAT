@@ -47,11 +47,12 @@
 
     #toast{position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:var(--panel);padding:.5rem 1rem;border-radius:.5rem;opacity:0;pointer-events:none;transition:opacity .3s ease;z-index:9999}
     #toast.show{opacity:1}
-  #online-users{position:fixed;top:1rem;right:1rem;background:var(--panel);padding:1rem;border-radius:.75rem;max-height:60vh;overflow:auto;font-size:.9rem;z-index:10}
-#online-users h3{margin:0 0 .5rem 0;color:var(--accent);font-size:1rem}
-#online-users ul{list-style:none;padding:0;margin:0}
-#online-users li{margin:.25rem 0;color:#0ff;font-style:italic}
-</style>
+
+    #online-users{position:fixed;top:1rem;right:1rem;background:var(--panel);padding:1rem;border-radius:.75rem;max-height:60vh;overflow:auto;font-size:.9rem;z-index:10}
+    #online-users h3{margin:0 0 .5rem 0;color:var(--accent);font-size:1rem}
+    #online-users ul{list-style:none;padding:0;margin:0}
+    #online-users li{margin:.25rem 0;color:#0ff;font-style:italic}
+  </style>
 </head>
 <body>
   <section id="login-screen" class="screen">
@@ -71,134 +72,128 @@
   </section>
 
   <div id="toast"></div>
-<div id="online-users">
-  <h3>Online Users</h3>
-  <ul id="user-list"></ul>
-</div>
+  <div id="online-users">
+    <h3>Online Users</h3>
+    <ul id="user-list"></ul>
+  </div>
 
   <script>
-    // ===== Firebase config (replace with your values) =====
-    const firebaseConfig={
-      apiKey:"AIzaSyCLmsuZvBu526oiHtX2NNoqHoclZ7lMrt0",
-      authDomain:"flyoutchat.firebaseapp.com",
-      databaseURL:"https://flyoutchat-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId:"flyoutchat",
-      storageBucket:"flyoutchat.appspot.com",
-      messagingSenderId:"1032339038175",
-      appId:"1:1032339038175:web:af095a595ede018b83ae6a"
+    const firebaseConfig = {
+      apiKey: "AIzaSyCLmsuZvBu526oiHtX2NNoqHoclZ7lMrt0",
+      authDomain: "flyoutchat.firebaseapp.com",
+      databaseURL: "https://flyoutchat-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "flyoutchat",
+      storageBucket: "flyoutchat.appspot.com",
+      messagingSenderId: "1032339038175",
+      appId: "1:1032339038175:web:af095a595ede018b83ae6a"
     };
     firebase.initializeApp(firebaseConfig);
-    const db=firebase.database();
+    const db = firebase.database();
 
-    // ===== DOM refs =====
-    const $=id=>document.getElementById(id);
-    const loginScreen=$("login-screen");
-    const chatScreen=$("chat-screen");
-    const loginBtn=$("login-btn");
-    const verifyBtn=$("verify-btn");
-    const nicknameInput=$("nickname");
-    const messageInput=$("message-input");
-    const composer=$("composer");
-    const messageContainer=$("message-container");
-    const toast=$("toast");
+    const $ = id => document.getElementById(id);
+    const loginScreen = $("login-screen");
+    const chatScreen = $("chat-screen");
+    const loginBtn = $("login-btn");
+    const verifyBtn = $("verify-btn");
+    const nicknameInput = $("nickname");
+    const messageInput = $("message-input");
+    const composer = $("composer");
+    const messageContainer = $("message-container");
+    const toast = $("toast");
 
-    let currentNick=null;
+    let currentNick = null;
 
-    const showToast=(msg,ms=3000)=>{toast.textContent=msg;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),ms)};
+    const showToast = (msg, ms = 3000) => {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), ms);
+    };
 
-    // ===== Verification (dummy) =====
-    verifyBtn.addEventListener("click",()=>{
-      window.open("https://www.instagram.com/exvisuites/","_blank");
+    verifyBtn.addEventListener("click", () => {
+      window.open("https://www.instagram.com/exvisuites/", "_blank");
       showToast("Setelah follow, klik Enter Chat");
     });
 
-    // ===== Login =====
     loginBtn.addEventListener("click", () => {
       const nick = nicknameInput.value.trim();
-      if (!nick) {
-        showToast("Nickname wajib");
-        return;
-      }
+      if (!nick) return showToast("Nickname wajib");
       currentNick = nick;
-      // Mark user online
       db.ref(`onlineUsers/${nick}`).set(true);
       db.ref(`onlineUsers/${nick}`).onDisconnect().remove();
       loginScreen.classList.add("hidden");
       chatScreen.classList.remove("hidden");
 
-      // Ambil pesan sebelumnya agar muncul saat user baru masuk
       db.ref("messages").once("value", (snapshot) => {
         snapshot.forEach((snap) => {
           const { nick: msgNick, text } = snap.val();
           displayFlyout(msgNick, text);
         });
       });
-    });
 
-    // ===== Send message =====
-    composer.addEventListener("submit",e=>{
-      e.preventDefault();
-      const text=messageInput.value.trim();
-      if(!text||!currentNick)return;
-      messageInput.value="";
-      db.ref("messages").push({nick:currentNick,text,ts:Date.now()});
-    });
+      db.ref("onlineUsers").once("value", snapshot => {
+        snapshot.forEach(snap => {
+          const nick = snap.key;
+          if (!document.getElementById(`user-${nick}`)) {
+            const li = document.createElement("li");
+            li.id = `user-${nick}`;
+            li.textContent = nick;
+            document.getElementById("user-list").appendChild(li);
+          }
+        });
+      });
 
-    // ===== Receive messages =====
-    db.ref("messages").limitToLast(200).on("child_added",snap=>{
-      const {nick,text}=snap.val();
-      displayFlyout(nick,text);
-    });
-
-    // ===== Track online users =====
-    // Ambil semua user online saat login
-    db.ref("onlineUsers").once("value", snapshot => {
-      snapshot.forEach(snap => {
+      db.ref("onlineUsers").on("child_added", snap => {
         const nick = snap.key;
-        const li = document.createElement("li");
-        li.id = `user-${nick}`;
-        li.textContent = nick;
-        document.getElementById("user-list").appendChild(li);
+        if (!document.getElementById(`user-${nick}`)) {
+          displayFlyout(nick, "online");
+          const li = document.createElement("li");
+          li.id = `user-${nick}`;
+          li.textContent = nick;
+          document.getElementById("user-list").appendChild(li);
+        }
+      });
+
+      db.ref("onlineUsers").on("child_removed", snap => {
+        const nick = snap.key;
+        displayFlyout(nick, "offline");
+        const li = document.getElementById(`user-${nick}`);
+        if (li) li.remove();
       });
     });
 
-    // Listener user baru yang login
-    db.ref("onlineUsers").on("child_added", snap => {
-      const nick = snap.key;
-      if (!document.getElementById(`user-${nick}`)) {
-        displayFlyout(nick, "online");
-        const li = document.createElement("li");
-        li.id = `user-${nick}`;
-        li.textContent = nick;
-        document.getElementById("user-list").appendChild(li);
-      }
+    composer.addEventListener("submit", e => {
+      e.preventDefault();
+      const text = messageInput.value.trim();
+      if (!text || !currentNick) return;
+      messageInput.value = "";
+      db.ref("messages").push({ nick: currentNick, text, ts: Date.now() });
     });
-    db.ref("onlineUsers").on("child_removed", snap => {
-  const nick = snap.key;
-  displayFlyout(nick, "offline");
-  const li = document.getElementById(`user-${nick}`);
-  if (li) li.remove();
-});
 
-    // ===== Flyout bubble =====
-    function displayFlyout(nick,text){
-      const bubble=document.createElement("div");
-      if(text==="online")bubble.className="message user-flyout",bubble.textContent=`👤 ${nick} joined`;
-      else if(text==="offline")bubble.className="message user-leave",bubble.textContent=`❌ ${nick} left`;
-      else bubble.className="message",bubble.textContent=`${nick}: ${text}`;
+    db.ref("messages").limitToLast(200).on("child_added", snap => {
+      const { nick, text } = snap.val();
+      displayFlyout(nick, text);
+    });
 
-      // Random start position
-      bubble.style.top=`${Math.random()*100}vh`;
-      bubble.style.left=`${Math.random()*100}vw`;
-      // Random trajectory
-      const dx=(Math.random()*2-1)*window.innerWidth*1.2;
-      const dy=(Math.random()*2-1)*window.innerHeight*1.2;
-      bubble.style.setProperty("--dx",`${dx}px`);
-      bubble.style.setProperty("--dy",`${dy}px`);
-
+    function displayFlyout(nick, text) {
+      const bubble = document.createElement("div");
+      if (text === "online") {
+        bubble.className = "message user-flyout";
+        bubble.textContent = `👤 ${nick} joined`;
+      } else if (text === "offline") {
+        bubble.className = "message user-leave";
+        bubble.textContent = `❌ ${nick} left`;
+      } else {
+        bubble.className = "message";
+        bubble.textContent = `${nick}: ${text}`;
+      }
+      bubble.style.top = `${Math.random() * 100}vh`;
+      bubble.style.left = `${Math.random() * 100}vw`;
+      const dx = (Math.random() * 2 - 1) * window.innerWidth * 1.2;
+      const dy = (Math.random() * 2 - 1) * window.innerHeight * 1.2;
+      bubble.style.setProperty("--dx", `${dx}px`);
+      bubble.style.setProperty("--dy", `${dy}px`);
       messageContainer.appendChild(bubble);
-      // Remove after 30s to avoid memory leak
-      setTimeout(()=>bubble.remove(),30000);
+      setTimeout(() => bubble.remove(), 30000);
     }
   </script>
 </body>
